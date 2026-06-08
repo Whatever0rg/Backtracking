@@ -1,5 +1,4 @@
 from operator import itemgetter
-from numpy import copy
 from time import sleep
 
 
@@ -86,50 +85,79 @@ def print_field(field):
 
 
 
-def backtrack(labrinth,start_point,last_move,end_point,moves_ary=[],k_path=None):
-    canMove = False
-    moves_ary.append(last_move)
-    if last_move==end_point:
-        print("Finish reached")
-        if k_path is None or len(moves_ary) <= k_path:
-            k_path=len(moves_ary)
-        return (len(moves_ary), moves_ary),k_path
+def backtrack(labrinth,current_point,end_point,moves_ary=None,best=None,visited=None):
+    #print("ENTER", current_point, moves_ary) # For debugging purposes
+    if moves_ary is None:
+        moves_ary=[]
     
-
-    possible_moves = []
-    for move in [Moves.N,Moves.S,Moves.O,Moves.W]:
-        next_pos = move(last_move)
-        if not isBarrier(labrinth,next_pos):
-            possible_moves.append((move,Moves.cost(start_point,next_pos,end_point)))
-    res_moves = sorted(possible_moves,key=itemgetter(1))
-    path = []
+    if best is None:
+        best=[]
     
-    for move, val in res_moves:
-        next_pos = move(last_move)
-        if next_pos not in moves_ary:
-            if k_path is None or len(moves_ary) <= k_path:
-                print(val)
-                result, k_path = backtrack(
-                    labrinth,
-                    start_point,
-                    next_pos,
-                    end_point,
-                    moves_ary.copy(),
-                    k_path
-                )
+    if visited is None:
+        visited = {}
 
-                if result is not None:
-                    path.append(result)
+    moves_ary= moves_ary+[current_point]
+    val_moves=len(moves_ary)
+    val_best=len(best)
+    pos_moves=[]
+    result=[]
 
-    if path:
-        return min(path, key=lambda p: p[0])
+    # Early branch pruning
+    if best and val_moves >= val_best:
+        return best
 
-    return None
+    if current_point in visited and visited[current_point] <= val_moves:
+        moves_ary.pop()
+        return best
+    else:
+        visited[current_point] = val_moves
+
+    # Win condition
+    if current_point == end_point:
+        print(f'Finish reached in {val_moves} moves')
+
+        if val_best >= val_moves or best == []:
+            print('New best finish')
+            best = list(moves_ary)
+        return best
+    
+    # Possible moves
+    for move in (Moves.N,Moves.O,Moves.S,Moves.W):
+        next_move = move(current_point)
+
+        if not isBarrier(labrinth,next_move):
+            pos_moves.append(next_move)
+                        
+    # Recursion
+    if pos_moves != []:
+
+        for move in pos_moves:
+            best = backtrack(labrinth,move,end_point,moves_ary,best,visited)
+            #print("TRY", current_point, "->", move) # For debugging puposes
+            if best:
+                result.append((len(best),best))
+        moves_ary.pop()
+
+        if result:
+            min_best = min(result, key=lambda x:x[0])[1]
+            return min_best
+    
+    # More pruning
+    else:
+        print(f'Hit dead end or moved in a circle')
+        return best
+
+    return best
+    
+        
+        
+
 
 def print_path(labrinth,moves_ary):
     for i in range(len(moves_ary)):
         labrinth[moves_ary[i][1]][moves_ary[i][0]]='.'
-        print_field(labrinth)
+    print_field(labrinth)
+        
 
 
 def main():
@@ -137,10 +165,10 @@ def main():
     print_field(labrinth)
     labrinth, start_point, end_point=add_border(labrinth,start_point,end_point)
     print_field(labrinth)
-    print(start_point, end_point)
-    length, move_ary = backtrack(labrinth,start_point,start_point, end_point)
-    print_path(labrinth,move_ary)
-    print(f'Start: {start_point}\nEnd: {end_point}\nPath Lenght: {length}\nFinishing Array:\n{move_ary}')
+    print(f'Start: {start_point}, End: {end_point}')
+    best = backtrack(labrinth,start_point,end_point)
+    print_path(labrinth,best)
+    print(f'Start: {start_point}\nEnd: {end_point}\nPath Lenght: {len(best)}\nFinishing Array:\n{best}')
 
 
 
