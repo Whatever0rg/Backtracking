@@ -47,8 +47,7 @@ def isBarrier(labrinth,pos):
 
 def read_labrinth(filename):
     with open(filename,'r') as file:
-        a=list(file)
-        stripped_a =[row.strip() for row in a]
+        stripped_a=file.read().splitlines()
     labrinth=[]
     for row in range(len(stripped_a)):
         print(labrinth)
