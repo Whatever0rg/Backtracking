@@ -1,12 +1,8 @@
-from operator import itemgetter
-from time import sleep
-
-
-
 class LabrintheMarkers():
-    end_point_marker = 'z'
-    start_point_marker = 's'
+    end_point_marker = 'E'
+    start_point_marker = 'S'
     border_marker = 'x'
+
 
 class Moves():
     def N(coordinate):
@@ -32,23 +28,26 @@ class Moves():
         x -=1
         coordinate = x,y
         return coordinate
-    
-    def cost(start,position,end):
-        s_cost= abs(position[0]-start[0])+abs(position[1]-start[1])
-        f_cost= abs(position[0]-end[0])+abs(position[1]-end[1])
-        result= s_cost + f_cost
-        return result, s_cost, f_cost
 
-def isBarrier(labrinth,pos):
+
+def isFree(labrinth,pos):
     if labrinth[pos[1]][pos[0]] == 'x':
+        return False
+    else:
+        return True
+    
+def isEscape(labrinth,pos):
+    if labrinth[pos[1]][pos[0]] == 'E':
         return True
     else:
-        return False
+        return F
+
 
 def read_labrinth(filename):
     with open(filename,'r') as file:
         stripped_a=file.read().splitlines()
     labrinth=[]
+    start_point = None
     for row in range(len(stripped_a)):
         print(labrinth)
         labrinth.append(list(stripped_a[row]))
@@ -60,21 +59,28 @@ def read_labrinth(filename):
                     end_point = (collum,row)
 
     print(f"x:{len(labrinth[0])} y:{len(labrinth)}")
+    if start_point == None:
+        start_point = (1,1)
     return labrinth, start_point, end_point
+
 
 def add_border(labrinth,start_point,end_point):
     row_width = len(labrinth[0])
     border_labrinth=[['x' for n in range(row_width+2)]]
+
     for row in range(len(labrinth)):
         border_row=['x']
+
         for collum in labrinth[row]:
             border_row.append(collum)
         border_row.append('x')
         border_labrinth.append(border_row)
+
     border_labrinth.append(['x' for n in range(row_width+2)])
     start_point=Moves.S(Moves.O(start_point))
     end_point=Moves.S(Moves.O(end_point))
     return border_labrinth,start_point,end_point
+
 
 def print_field(field):
     for row in range(len(field)):
@@ -83,8 +89,7 @@ def print_field(field):
         print(end="\n")
 
 
-
-def backtrack(labrinth,current_point,end_point,moves_ary=None,best=None,visited=None):
+def find_escape(labrinth,current_point,end_point,moves_ary=None,best=None,visited=None):
     #print("ENTER", current_point, moves_ary) # For debugging purposes
     if moves_ary is None:
         moves_ary=[]
@@ -124,14 +129,14 @@ def backtrack(labrinth,current_point,end_point,moves_ary=None,best=None,visited=
     for move in (Moves.N,Moves.O,Moves.S,Moves.W):
         next_move = move(current_point)
 
-        if not isBarrier(labrinth,next_move):
+        if isFree(labrinth,next_move):
             pos_moves.append(next_move)
                         
     # Recursion
     if pos_moves != []:
 
         for move in pos_moves:
-            best = backtrack(labrinth,move,end_point,moves_ary,best,visited)
+            best = find_escape(labrinth,move,end_point,moves_ary,best,visited)
             #print("TRY", current_point, "->", move) # For debugging puposes
             if best:
                 result.append((len(best),best))
@@ -147,9 +152,6 @@ def backtrack(labrinth,current_point,end_point,moves_ary=None,best=None,visited=
         return best
 
     return best
-    
-        
-        
 
 
 def print_path(labrinth,moves_ary):
@@ -158,17 +160,22 @@ def print_path(labrinth,moves_ary):
     print_field(labrinth)
         
 
-
 def main():
-    labrinth, start_point, end_point = read_labrinth("labrinth.txt")
+    # Read in Labrinth
+    labrinth, start_point, end_point = read_labrinth("labrinth_easy.txt")
     print_field(labrinth)
+
+    # Add border to Stop outofbounds searching
     labrinth, start_point, end_point=add_border(labrinth,start_point,end_point)
     print_field(labrinth)
     print(f'Start: {start_point}, End: {end_point}')
-    best = backtrack(labrinth,start_point,end_point)
+
+    # Recursion
+    best = find_escape(labrinth,start_point,end_point)
+
+    # Printing solution
     print_path(labrinth,best)
     print(f'Start: {start_point}\nEnd: {end_point}\nPath Lenght: {len(best)}\nFinishing Array:\n{best}')
-
 
 
 if __name__ == "__main__":
