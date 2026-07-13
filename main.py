@@ -154,12 +154,15 @@ def print_field(field):
 
 def find_escape(field, row_number, column_number, route=()):
     current_point = (row_number, column_number)
+    tuple_route = ()
     if route == ():
         route = find_escape_full(field, current_point)
     else:
         new_route = [route]
         route = find_escape_full(field, current_point, route=new_route)
-    return route
+    for i in route:
+        tuple_route = tuple_route + (i,)
+    return tuple_route
 
 
 def find_escape_full(labrinth, current_point, end_point=None,
@@ -204,7 +207,7 @@ def find_escape_full(labrinth, current_point, end_point=None,
     # Win condition
     # Without Tuple, function call isEscape
     if end_point is None:
-        if isEscape(labrinth, row_number=current_point[1],
+        if is_escape(labrinth, row_number=current_point[1],
                     collum_number=current_point[0]):
             print(f'Finish reached in {val_moves} moves')
             if val_best >= val_moves or best_route == []:
@@ -225,7 +228,7 @@ def find_escape_full(labrinth, current_point, end_point=None,
     for move in (Moves.north, Moves.east, Moves.south, Moves.west):
         next_move = move(current_point)
 
-        if isFree(labrinth, row_number=next_move[1], collum_number=next_move[0]):
+        if is_free(labrinth, row_number=next_move[1], collum_number=next_move[0]):
             pos_moves.append(next_move)
 
     # Recursion
